@@ -1,6 +1,7 @@
 // let changeColor = document.getElementById("changeColor");
 let saveButton = document.getElementById("save-item");
 let itemsList = document.getElementById("items-list");
+let hostlist = ["www.amazon.com", "us.shein.com"]
 // chrome.storage.sync.clear()
 setOriginalItems()
 
@@ -14,21 +15,27 @@ saveButton.addEventListener("click", () => {
         var title = tab.title;
         var url = tab.url;
         var host = new URL(url).hostname;
+        console.log(host)
 
-        chrome.storage.sync.get(["items"], (savedItems) => {
-            if (!checkIfItemExists(savedItems.items, url)) {
-                if (savedItems.items.length > 0) {
-                    chrome.storage.sync.set({ "items": [...savedItems.items, { title, url }] }, () => {
-                        createItem(title, url)
-                    });
+        if (hostlist.includes(host)) {
+            chrome.storage.sync.get(["items"], (savedItems) => {
+                if (!checkIfItemExists(savedItems.items, url)) {
+                    if (savedItems.items.length > 0) {
+                        chrome.storage.sync.set({ "items": [...savedItems.items, { title, url }] }, () => {
+                            createItem(title, url)
+                        });
+                    }
+                    else {
+                        chrome.storage.sync.set({ "items": [{ title, url }] }, () => {
+                            createItem(title, url)
+                        });
+                    }
                 }
-                else {
-                    chrome.storage.sync.set({ "items": [{ title, url }] }, () => {
-                        createItem(title, url)
-                    });
-                }
-            }
-        });
+            });
+        }
+        else {
+            showError("This website is not supported")
+        }
     });
 
     // chrome.scripting.executeScript({
@@ -94,4 +101,10 @@ function deleteItem(url) {
     item.remove()
 
     console.log("item deleted")
+}
+
+function showError(message) {
+    let error = document.getElementById("error");
+    error.innerText = message;
+    error.style.display = "block";
 }
